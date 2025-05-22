@@ -539,13 +539,13 @@
             detectGasType(concentration) {
                   if (concentration < 8) {
                     return "Clean Air";
-                } else if (concentration < 10) {
-                    return "CO2 (Carbon Dioxide)";
                 } else if (concentration < 20) {
+                    return "CO2 (Carbon Dioxide)";
+                } else if (concentration < 30) {
                     return "NO2 (Nitrogen Dioxide)";
-                } else if (concentration < 35) {
+                } else if (concentration < 45) {
                     return "NH3 (Ammonia)";
-                } else if (concentration < 50) {
+                } else if (concentration < 60) {
                     return "CO (Carbon Monoxide)";
                 } else {
                     return "Mixed Pollutants";

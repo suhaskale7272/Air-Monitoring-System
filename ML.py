@@ -66,9 +66,9 @@ def load_data(file_path=CSV_FILE_PATH):
         return pd.DataFrame()
 
 def detect_gas_type(concentration):
-    if concentration < 8:
+    if concentration < 10:
         return "Clean Air"
-    elif 8 <= concentration < 20:
+    elif 10 <= concentration < 20:
         return "CO2 (Carbon Dioxide)"
     elif 20 <= concentration < 30:
         return "NO2 (Nitrogen Dioxide)"

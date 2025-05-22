@@ -537,18 +537,18 @@
             }
 
             detectGasType(concentration) {
-                if (concentration < 20) {
+                if (concentration < 8) {
                     return "Clean Air";
+                } else if (concentration < 10) {
+                    return "CO2 (Carbon Dioxide)";
+                } else if (concentration < 20) {
+                    return "NO2 (Nitrogen Dioxide)";
+                } else if (concentration < 35) {
+                    return "NH3 (Ammonia)";
                 } else if (concentration < 50) {
                     return "CO (Carbon Monoxide)";
-                } else if (concentration < 100) {
-                    return "NO2 (Nitrogen Dioxide)";
-                } else if (concentration < 200) {
-                    return "NH3 (Ammonia)";
-                } else if (concentration < 500) {
-                    return "Mixed Pollutants";
                 } else {
-                    return "Hazardous Air";
+                    return "Mixed Pollutants";
                 }
             }
 

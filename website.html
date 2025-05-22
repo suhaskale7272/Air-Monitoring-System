@@ -563,9 +563,9 @@
             }
 
             getAirQuality(gasLevel) {
-                if (gasLevel < 10) {
+                if (gasLevel < 15) {
                     return { label: "Good", class: "status-good" };
-                } else if (gasLevel < 35) {
+                } else if (gasLevel < 50) {
                     return { label: "Moderate", class: "status-moderate" };
                 } else {
                     return { label: "Poor", class: "status-poor" };

@@ -68,13 +68,13 @@ def load_data(file_path=CSV_FILE_PATH):
 def detect_gas_type(concentration):
     if concentration < 8:
         return "Clean Air"
-    elif 8 <= concentration < 10:
+    elif 8 <= concentration < 20:
         return "CO2 (Carbon Dioxide)"
-    elif 10 <= concentration < 20:
+    elif 20 <= concentration < 30:
         return "NO2 (Nitrogen Dioxide)"
-    elif 20 <= concentration < 35:
+    elif 30 <= concentration < 45:
         return "NH3 (Ammonia)"
-    elif 35 <= concentration < 50:
+    elif 45 <= concentration < 60:
         return "CO (Carbon Monoxide)"
     else:
         return "Mixed Pollutants"

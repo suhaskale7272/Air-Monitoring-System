@@ -66,18 +66,18 @@ def load_data(file_path=CSV_FILE_PATH):
         return pd.DataFrame()
 
 def detect_gas_type(concentration):
-    if concentration < 20:
+    if concentration < 8:
         return "Clean Air"
-    elif 20 <= concentration < 50:
-        return "CO (Carbon Monoxide)"
-    elif 50 <= concentration < 100:
+    elif 8 <= concentration < 10:
+        return "CO2 (Carbon Dioxide)"
+    elif 10 <= concentration < 20:
         return "NO2 (Nitrogen Dioxide)"
-    elif 100 <= concentration < 200:
+    elif 20 <= concentration < 35:
         return "NH3 (Ammonia)"
-    elif 200 <= concentration < 500:
-        return "Mixed Pollutants"
+    elif 35 <= concentration < 50:
+        return "CO (Carbon Monoxide)"
     else:
-        return "Hazardous Air"
+        return "Mixed Pollutants"
 
 def engineer_features(df):
     df = df.copy()

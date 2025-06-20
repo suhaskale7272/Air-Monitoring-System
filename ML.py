@@ -8,7 +8,7 @@ import json
 import argparse
 import os
 import csv
-import time  # Added the missing import for time
+import time
 from datetime import datetime
 
 # Constants
@@ -17,55 +17,69 @@ CSV_FILE_PATH = "data/sensor_readings.csv"
 RETRAIN_INTERVAL = 10
 
 def fetch_sensor_data(training_df=None):
+    """Fetch sensor data with PM2.5 support"""
     if training_df is not None and not training_df.empty:
         last_row = training_df.iloc[-1]
         return {
             'temperature': last_row['temperature'],
             'humidity': last_row['humidity'],
             'gas': last_row['gas'],
+            'pm25': last_row.get('pm25', None),  # Handle missing PM2.5
             'timestamp': datetime.now().isoformat()
         }
     # Fallback to simulated data
     temperature = round(np.random.uniform(20, 35), 2)
     humidity = round(np.random.uniform(30, 60), 2)
     gas = round(np.random.uniform(4, 15), 2)
+    pm25 = round(np.random.uniform(5, 50), 2)  # Simulated PM2.5
     return {
         'temperature': temperature,
         'humidity': humidity,
         'gas': gas,
+        'pm25': pm25,
         'timestamp': datetime.now().isoformat()
     }
 
 def store_sensor_reading(reading):
+    """Store sensor readings with PM2.5 support"""
     os.makedirs(os.path.dirname(CSV_FILE_PATH), exist_ok=True)
-    if not os.path.isfile(CSV_FILE_PATH):
-        with open(CSV_FILE_PATH, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['timestamp', 'temperature', 'humidity', 'gas'])
-
+    header = ['timestamp', 'temperature', 'humidity', 'gas', 'pm25']
+    
+    write_header = not os.path.isfile(CSV_FILE_PATH)
+    
     with open(CSV_FILE_PATH, 'a', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow([
-            reading['timestamp'],
-            reading['temperature'],
-            reading['humidity'],
-            reading['gas']
-        ])
+        writer = csv.DictWriter(f, fieldnames=header)
+        if write_header:
+            writer.writeheader()
+        writer.writerow({
+            'timestamp': reading['timestamp'],
+            'temperature': reading['temperature'],
+            'humidity': reading['humidity'],
+            'gas': reading['gas'],
+            'pm25': reading.get('pm25', '')  # Handle missing PM2.5
+        })
 
 def load_data(file_path=CSV_FILE_PATH):
+    """Load data with PM2.5 support and better error handling"""
     try:
         df = pd.read_csv(file_path)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
-        df['temperature'] = pd.to_numeric(df['temperature'], errors='coerce')
-        df['humidity'] = pd.to_numeric(df['humidity'], errors='coerce')
-        df['gas'] = pd.to_numeric(df['gas'], errors='coerce')
-        df.dropna(inplace=True)
+        
+        # Convert numeric columns and handle missing values
+        numeric_cols = ['temperature', 'humidity', 'gas', 'pm25']
+        for col in numeric_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+        
+        # Drop rows with missing essential values
+        df.dropna(subset=['temperature', 'humidity', 'gas'], inplace=True)
         return df
     except Exception as e:
         print(f"Error loading data: {e}")
         return pd.DataFrame()
 
 def detect_gas_type(concentration):
+    """Gas type detection - unchanged as requested"""
     if concentration < 12:
         return "Clean Air"
     elif 12 <= concentration < 20:
@@ -79,7 +93,24 @@ def detect_gas_type(concentration):
     else:
         return "Mixed Pollutants"
 
+def get_pm25_quality(pm25_value):
+    """PM2.5 quality assessment"""
+    if pd.isna(pm25_value):
+        return None
+    
+    if pm25_value <= 12:
+        return {"label": "Good", "class": "status-good"}
+    elif pm25_value <= 35:
+        return {"label": "Moderate", "class": "status-moderate"}
+    elif pm25_value <= 55:
+        return {"label": "Unhealthy for Sensitive", "class": "status-poor"}
+    elif pm25_value <= 150:
+        return {"label": "Unhealthy", "class": "status-unhealthy"}
+    else:
+        return {"label": "Hazardous", "class": "status-hazardous"}
+
 def engineer_features(df):
+    """Feature engineering - unchanged as requested"""
     df = df.copy()
     df['hour'] = df['timestamp'].dt.hour
     df['day'] = df['timestamp'].dt.day
@@ -88,6 +119,7 @@ def engineer_features(df):
     return df
 
 def train_model(df):
+    """Model training - unchanged as requested"""
     df = engineer_features(df)
     features = ['temperature', 'humidity', 'hour', 'day', 'gas_lag1', 'gas_rolling_mean']
     scaler = StandardScaler()
@@ -108,10 +140,15 @@ def train_model(df):
     return model, scaler, features, confidence
 
 def predict_from_input(file_path, model, scaler, features, training_df):
+    """Prediction function with PM2.5 support in output"""
     try:
         df = pd.read_csv(file_path)
         df['timestamp'] = pd.to_datetime(df['created_at'])
-        df = df.rename(columns={'field1': 'temperature', 'field2': 'humidity'})
+        df = df.rename(columns={
+            'field1': 'temperature', 
+            'field2': 'humidity',
+            'field4': 'pm25'
+        })
         
         # Add engineered features
         df['hour'] = df['timestamp'].dt.hour
@@ -120,21 +157,35 @@ def predict_from_input(file_path, model, scaler, features, training_df):
         df['gas_lag1'] = last_gas
         df['gas_rolling_mean'] = training_df['gas'].rolling(window=3, min_periods=1).mean().iloc[-1] if not training_df.empty else last_gas
 
+        # Get PM2.5 value if available
+        pm25_value = df['pm25'].iloc[-1] if 'pm25' in df.columns and not pd.isna(df['pm25'].iloc[-1]) else None
+
+        # Make prediction (unchanged ML mechanism)
         X_input = scaler.transform([[df.iloc[-1][f] for f in features]])
         pred_gas = float(model.predict(X_input)[0])
         pred_gas = np.clip(pred_gas, 0, 1000)
         gas_type = detect_gas_type(pred_gas)
+        
+        # Determine air quality based on both gas and PM2.5
+        air_quality = "Good"
+        if pred_gas >= 20 or (pm25_value and pm25_value > 35):
+            air_quality = "Poor"
+        elif pm25_value and pm25_value > 55:
+            air_quality = "Unhealthy"
+            
         return {
             'gas_level': pred_gas,
             'gas_type': gas_type,
-            'air_quality': 'Good' if pred_gas < 20 else 'Poor',
+            'air_quality': air_quality,
+            'pm25_quality': get_pm25_quality(pm25_value),
             'confidence': 0.85  # Placeholder, use model confidence if available
         }
     except Exception as e:
         print(f"Error during prediction: {e}")
-        return {'error': 'Prediction failed'}
+        return {'error': str(e)}
 
 def continuous_monitoring():
+    """Monitoring function with PM2.5 support"""
     print("Starting air quality monitoring...")
     model, scaler, features, confidence = None, None, None, None
     df = load_data()
@@ -159,37 +210,4 @@ def continuous_monitoring():
                 pred_gas = float(model.predict(X_input)[0])
                 pred_gas = np.clip(pred_gas, 0, 1000)
                 gas_type = detect_gas_type(pred_gas)
-
-                print(f"\n[{datetime.now().isoformat()}] Latest:")
-                print(f"Temp: {latest['temperature']} °C, Humidity: {latest['humidity']} %")
-                print(f"Predicted Gas: {pred_gas:.2f} ppm - {gas_type}")
-                print(f"Confidence Score: {confidence:.1f}%")
-
-            time.sleep(SENSOR_READ_INTERVAL)
-    except KeyboardInterrupt:
-        print("Monitoring stopped.")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--predict', type=str, help='Path to prediction input CSV')
-    parser.add_argument('--data', type=str, help='Path to training data CSV')
-    parser.add_argument('--retrain', type=str, help='Path to training data CSV for retraining')
-    args = parser.parse_args()
-
-    if args.predict and args.data:
-        df = load_data(args.data)
-        if not df.empty:
-            model, scaler, features, confidence = train_model(df)
-            result = predict_from_input(args.predict, model, scaler, features, df)
-            print(json.dumps(result))
-        else:
-            print(json.dumps({'error': 'No training data available'}))
-    elif args.retrain:
-        df = load_data(args.retrain)
-        if not df.empty:
-            model, scaler, features, confidence = train_model(df)
-            print(json.dumps({'status': 'Model retrained', 'confidence': confidence}))
-        else:
-            print(json.dumps({'error': 'No training data available'}))
-    else:
-        continuous_monitoring()
+                pm25_quality = get_pm25_quality

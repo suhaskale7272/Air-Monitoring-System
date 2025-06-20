@@ -17,7 +17,8 @@
             --danger-color: #ff6b6b;
             --warning-color: #ffb142;
             --success-color: #1dd1a1;
-            --pm25-color: #9c27b0;
+            --unhealthy-color: #e67e22; /* New color for Unhealthy PM2.5 */
+            --hazardous-color: #c0392b; /* New color for Hazardous PM2.5 */
         }
         
         * {
@@ -35,7 +36,7 @@
         
         .container {
             width: 90%;
-            max-width: 1300px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
         }
@@ -66,7 +67,7 @@
         
         .dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -139,13 +140,13 @@
         .status-poor {
             background-color: var(--danger-color);
         }
-        
+
         .status-unhealthy {
-            background-color: #8e44ad;
+            background-color: var(--unhealthy-color);
         }
-        
+
         .status-hazardous {
-            background-color: #2c3e50;
+            background-color: var(--hazardous-color);
         }
         
         .charts {
@@ -160,7 +161,6 @@
             display: flex;
             border-bottom: 1px solid #eee;
             margin-bottom: 1rem;
-            flex-wrap: wrap;
         }
         
         .chart-tab {
@@ -355,7 +355,7 @@
             <div class="card" id="temperature-card">
                 <div class="card-header">
                     <h2 class="card-title">Temperature</h2>
-                    <span class="card-icon">🌡️</span>
+                    <span class="card-icon">🌡</span>
                 </div>
                 <div class="reading" id="temperature-reading">
                     -- <span class="reading-unit">°C</span>
@@ -381,7 +381,7 @@
             <div class="card" id="gas-card">
                 <div class="card-header">
                     <h2 class="card-title">Gas Level</h2>
-                    <span class="card-icon">🌫️</span>
+                    <span class="card-icon">🌫</span>
                 </div>
                 <div class="reading" id="gas-reading">
                     -- <span class="reading-unit">ppm</span>
@@ -393,15 +393,14 @@
                     <canvas id="gas-chart"></canvas>
                 </div>
             </div>
-            
-            <!-- NEW PM2.5 CARD -->
+
             <div class="card" id="pm25-card">
                 <div class="card-header">
                     <h2 class="card-title">PM2.5</h2>
-                    <span class="card-icon">🏭</span>
+                    <span class="card-icon">💨</span>
                 </div>
                 <div class="reading" id="pm25-reading">
-                    -- <span class="reading-unit">μg/m³</span>
+                    -- <span class="reading-unit">µg/m³</span>
                 </div>
                 <div>
                     <span class="status" id="pm25-status">Unknown</span>
@@ -416,7 +415,6 @@
             <div class="chart-tabs">
                 <div class="chart-tab active" data-tab="all-parameters">All Parameters</div>
                 <div class="chart-tab" data-tab="gas-details">Gas Details</div>
-                <div class="chart-tab" data-tab="pm25-details">PM2.5 Details</div>
                 <div class="chart-tab" data-tab="correlation">Correlation</div>
             </div>
             
@@ -426,11 +424,6 @@
             
             <div class="chart-panel" id="gas-details-panel">
                 <canvas id="gas-details-chart"></canvas>
-            </div>
-            
-            <!-- NEW PM2.5 DETAILS PANEL -->
-            <div class="chart-panel" id="pm25-details-panel">
-                <canvas id="pm25-details-chart"></canvas>
             </div>
             
             <div class="chart-panel" id="correlation-panel">
@@ -453,13 +446,18 @@
                 </div>
                 
                 <div class="prediction-item">
-                    <div class="prediction-label">Pollutant Type</div>
+                    <div class="prediction-label">Pollutant Type (Gas)</div>
                     <div class="prediction-value" id="pollutant-type">--</div>
                 </div>
                 
                 <div class="prediction-item">
-                    <div class="prediction-label">Air Quality</div>
+                    <div class="prediction-label">Air Quality (Overall)</div>
                     <div class="prediction-value" id="air-quality">--</div>
+                </div>
+
+                <div class="prediction-item">
+                    <div class="prediction-label">PM2.5 Quality</div>
+                    <div class="prediction-value" id="pm25-prediction-quality">--</div>
                 </div>
                 
                 <div class="prediction-item">
@@ -479,13 +477,12 @@
                             <th>Temperature (°C)</th>
                             <th>Humidity (%)</th>
                             <th>Gas (ppm)</th>
-                            <th>PM2.5 (μg/m³)</th>
-                            <th>Pollutant Type</th>
-                        </tr>
+                            <th>PM2.5 (µg/m³)</th> <th>Pollutant Type (Gas)</th>
+                            <th>PM2.5 Quality</th> </tr>
                     </thead>
                     <tbody id="data-table-body">
                         <tr>
-                            <td colspan="6" class="loading">Loading data...</td>
+                            <td colspan="7" class="loading">Loading data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -518,8 +515,7 @@
                 this.scalers = {
                     temperature: { mean: 25, std: 5 },
                     humidity: { mean: 60, std: 15 },
-                    gas: { mean: 300, std: 150 },
-                    pm25: { mean: 25, std: 15 }
+                    gas: { mean: 300, std: 150 }
                 };
                 if (data && data.length > 0) {
                     this.updateScalers(data);
@@ -530,8 +526,6 @@
                 const temps = data.map(d => d.temperature).filter(v => !isNaN(v));
                 const hums = data.map(d => d.humidity).filter(v => !isNaN(v));
                 const gases = data.map(d => d.gas).filter(v => !isNaN(v));
-                const pm25s = data.map(d => d.pm25).filter(v => !isNaN(v));
-                
                 if (temps.length > 0) {
                     this.scalers.temperature.mean = temps.reduce((a, b) => a + b, 0) / temps.length;
                     this.scalers.temperature.std = Math.sqrt(
@@ -550,12 +544,6 @@
                         gases.reduce((a, b) => a + Math.pow(b - this.scalers.gas.mean, 2), 0) / gases.length
                     ) || 1;
                 }
-                if (pm25s.length > 0) {
-                    this.scalers.pm25.mean = pm25s.reduce((a, b) => a + b, 0) / pm25s.length;
-                    this.scalers.pm25.std = Math.sqrt(
-                        pm25s.reduce((a, b) => a + Math.pow(b - this.scalers.pm25.mean, 2), 0) / pm25s.length
-                    ) || 1;
-                }
             }
 
             standardize(value, feature) {
@@ -566,6 +554,7 @@
                 return value * this.scalers[feature].std + this.scalers[feature].mean;
             }
 
+            // Note: PM2.5 is not used in the prediction of gas level as per requirement.
             predict(temperature, humidity) {
                 if (isNaN(temperature) || isNaN(humidity)) {
                     return 0;
@@ -580,7 +569,7 @@
             }
 
             detectGasType(concentration) {
-                if (concentration < 12) {
+                  if (concentration < 12) {
                     return "Clean Air";
                 } else if (concentration < 20) {
                     return "CO2 (Carbon Dioxide)";
@@ -605,28 +594,52 @@
                 return Math.max(Math.min(confidence, 100), 50).toFixed(1) + '%';
             }
 
-            getAirQuality(gasLevel) {
+            getAirQuality(gasLevel, pm25Level = null) {
+                let overallQuality = { label: "Good", class: "status-good" };
+
+                // Evaluate Gas Level
                 if (gasLevel < 15) {
-                    return { label: "Good", class: "status-good" };
+                    // Good based on gas
                 } else if (gasLevel < 50) {
-                    return { label: "Moderate", class: "status-moderate" };
+                    overallQuality = { label: "Moderate", class: "status-moderate" };
                 } else {
-                    return { label: "Poor", class: "status-poor" };
+                    overallQuality = { label: "Poor", class: "status-poor" };
                 }
+
+                // Evaluate PM2.5 Level if available and potentially override or worsen overall quality
+                if (pm25Level !== null && !isNaN(pm25Level)) {
+                    const pm25Quality = this.getPm25Quality(pm25Level);
+                    // Prioritize worse quality
+                    if (pm25Quality.label === "Hazardous" && overallQuality.label !== "Hazardous") {
+                        overallQuality = pm25Quality;
+                    } else if (pm25Quality.label === "Unhealthy" && (overallQuality.label !== "Hazardous" && overallQuality.label !== "Unhealthy")) {
+                        overallQuality = pm25Quality;
+                    } else if (pm25Quality.label === "Unhealthy for Sensitive" && (overallQuality.label !== "Hazardous" && overallQuality.label !== "Unhealthy" && overallQuality.label !== "Unhealthy for Sensitive")) {
+                        overallQuality = pm25Quality;
+                    } else if (pm25Quality.label === "Moderate" && (overallQuality.label === "Good")) {
+                        overallQuality = pm25Quality;
+                    }
+                }
+                return overallQuality;
             }
 
-            // NEW PM2.5 Quality Assessment
-            getPM25Quality(pm25Level) {
-                if (pm25Level <= 12) {
+            getPm25Quality(pm25Value) {
+                if (isNaN(pm25Value)) return { label: "Unknown", class: "" };
+                
+                if (pm25Value <= 12.0) {
                     return { label: "Good", class: "status-good" };
-                } else if (pm25Level <= 35) {
+                } else if (pm25Value <= 35.4) {
                     return { label: "Moderate", class: "status-moderate" };
-                } else if (pm25Level <= 55) {
-                    return { label: "Unhealthy for Sensitive", class: "status-poor" };
-                } else if (pm25Level <= 150) {
+                } else if (pm25Value <= 55.4) {
+                    return { label: "Unhealthy for Sensitive", class: "status-poor" }; // Using status-poor for this range
+                } else if (pm25Value <= 150.4) {
                     return { label: "Unhealthy", class: "status-unhealthy" };
-                } else {
+                } else if (pm25Value <= 250.4) {
+                    return { label: "Very Unhealthy", class: "status-danger" }; // You might need to add a style for status-danger
+                } else if (pm25Value <= 350.4) {
                     return { label: "Hazardous", class: "status-hazardous" };
+                } else {
+                    return { label: "Beyond Index", class: "status-hazardous" };
                 }
             }
         }
@@ -739,7 +752,7 @@
                 }
             );
 
-            // NEW PM2.5 CHART
+            // New PM2.5 Chart
             charts.pm25 = new Chart(
                 document.getElementById('pm25-chart'),
                 {
@@ -749,8 +762,8 @@
                         datasets: [{
                             label: 'PM2.5',
                             data: [],
-                            borderColor: '#9c27b0',
-                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            borderColor: '#FFCE56', // A distinct color for PM2.5
+                            backgroundColor: 'rgba(255, 206, 86, 0.1)',
                             borderWidth: 2,
                             tension: 0.4,
                             fill: true
@@ -810,13 +823,13 @@
                                 yAxisID: 'y1'
                             },
                             {
-                                label: 'PM2.5 (μg/m³)',
+                                label: 'PM2.5 (µg/m³)', // Add PM2.5 to all parameters chart
                                 data: [],
-                                borderColor: '#9c27b0',
-                                backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                                borderColor: '#FFCE56',
+                                backgroundColor: 'rgba(255, 206, 86, 0.1)',
                                 borderWidth: 2,
                                 tension: 0.4,
-                                yAxisID: 'y1'
+                                yAxisID: 'y1' // Use same axis as gas for simplicity, or add a third if range is very different
                             }
                         ]
                     },
@@ -837,7 +850,7 @@
                                 position: 'right',
                                 title: {
                                     display: true,
-                                    text: 'Gas (ppm) / PM2.5 (μg/m³)'
+                                    text: 'Gas (ppm) / PM2.5 (µg/m³)'
                                 },
                                 grid: {
                                     drawOnChartArea: false
@@ -890,3 +903,533 @@
                                 display: false
                             }
                         },
+                        maintainAspectRatio: false,
+                        responsive: true
+                    }
+                }
+            );
+
+            charts.correlation = new Chart(
+                document.getElementById('correlation-chart'),
+                {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Temperature vs Gas',
+                            data: [],
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            pointRadius: 5
+                        }, {
+                            label: 'Humidity vs Gas',
+                            data: [],
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            pointRadius: 5
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Temperature (°C) / Humidity (%)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Gas Level (ppm)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.datasetIndex === 0) {
+                                            label += (${context.parsed.x.toFixed(1)}°C, ${context.parsed.y.toFixed(1)} ppm);
+                                        } else {
+                                            label += (${context.parsed.x.toFixed(1)}%, ${context.parsed.y.toFixed(1)} ppm);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        maintainAspectRatio: false,
+                        responsive: true
+                    }
+                }
+            );
+        }
+
+        async function fetchData(retryCount = 3) {
+            console.log(Attempting to fetch data from ThingSpeak (Attempt ${4 - retryCount}/3));
+            try {
+                // Fetch field1 (temperature), field2 (humidity), field3 (gas), field4 (PM2.5)
+                const response = await fetch(https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?api_key=${API_KEY}&results=50, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(HTTP error! Status: ${response.status} - ${response.statusText});
+                }
+                const data = await response.json();
+                console.log('ThingSpeak API response:', data);
+                if (!data || !data.feeds || !Array.isArray(data.feeds)) {
+                    throw new Error('Invalid data format: feeds array is missing or malformed');
+                }
+                if (data.feeds.length === 0) {
+                    throw new Error('No data feeds available from ThingSpeak');
+                }
+                processData(data.feeds);
+                storeDataAsCSV(data.feeds);
+                return data.feeds;
+            } catch (error) {
+                console.error('Error fetching ThingSpeak data:', error.message);
+                if (retryCount > 1) {
+                    console.log(Retrying... (${retryCount - 1} attempts left));
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+                    return fetchData(retryCount - 1);
+                }
+                showError(Failed to fetch data from ThingSpeak: ${error.message}. Please check your API key and channel ID.);
+                return [];
+            }
+        }
+
+        function processData(feeds) {
+            if (!feeds || feeds.length === 0) {
+                showError('No data feeds to process.');
+                return;
+            }
+            allData = feeds.map(feed => {
+                const timestamp = new Date(feed.created_at);
+                const temperature = parseFloat(feed.field1) || 0;
+                const humidity = parseFloat(feed.field2) || 0;
+                const gas = parseFloat(feed.field3) || 0;
+                const pm25 = parseFloat(feed.field4) || 0; // Assuming field4 is PM2.5
+                const gasType = model.detectGasType(gas);
+                const pm25Quality = model.getPm25Quality(pm25);
+                return {
+                    timestamp,
+                    formattedTime: formatTime(timestamp),
+                    temperature,
+                    humidity,
+                    gas,
+                    pm25,
+                    gasType,
+                    pm25QualityLabel: pm25Quality.label,
+                    pm25QualityClass: pm25Quality.class
+                };
+            }).filter(item => !isNaN(item.temperature) && !isNaN(item.humidity) && !isNaN(item.gas) && !isNaN(item.pm25) && item.timestamp.getTime());
+
+            console.log('Processed data:', allData);
+            if (allData.length > 0) {
+                model = new AirQualityModel(allData); // Re-initialize model with potentially updated scalers
+                console.log('Updated model scalers:', model.scalers);
+                updateDashboard(allData[allData.length - 1]);
+                updateCharts(allData);
+                updateTable(allData);
+                runPrediction(allData[allData.length - 1]);
+            } else {
+                showError('No valid data points available for processing.');
+            }
+        }
+
+        function updateDashboard(latestData) {
+            document.getElementById('temperature-reading').innerHTML = 
+                ${latestData.temperature.toFixed(1)} <span class="reading-unit">°C</span>;
+            document.getElementById('humidity-reading').innerHTML = 
+                ${latestData.humidity.toFixed(1)} <span class="reading-unit">%</span>;
+            document.getElementById('gas-reading').innerHTML = 
+                ${latestData.gas.toFixed(1)} <span class="reading-unit">ppm</span>;
+            
+            const gasStatus = model.getAirQuality(latestData.gas); // Use original gas quality logic for this specific display
+            const statusElement = document.getElementById('gas-status');
+            statusElement.textContent = gasStatus.label;
+            statusElement.className = status ${gasStatus.class};
+
+            document.getElementById('pm25-reading').innerHTML = 
+                ${latestData.pm25.toFixed(1)} <span class="reading-unit">µg/m³</span>;
+            const pm25Status = model.getPm25Quality(latestData.pm25);
+            const pm25StatusElement = document.getElementById('pm25-status');
+            pm25StatusElement.textContent = pm25Status.label;
+            pm25StatusElement.className = status ${pm25Status.class};
+        }
+
+        function updateCharts(data) {
+            const recentData = data.slice(-MAX_POINTS);
+            const labels = recentData.map(d => d.formattedTime);
+
+            charts.temperature.data.labels = labels;
+            charts.temperature.data.datasets[0].data = recentData.map(d => d.temperature);
+            charts.temperature.update();
+
+            charts.humidity.data.labels = labels;
+            charts.humidity.data.datasets[0].data = recentData.map(d => d.humidity);
+            charts.humidity.update();
+
+            charts.gas.data.labels = labels;
+            charts.gas.data.datasets[0].data = recentData.map(d => d.gas);
+            charts.gas.update();
+
+            // Update PM2.5 chart
+            charts.pm25.data.labels = labels;
+            charts.pm25.data.datasets[0].data = recentData.map(d => d.pm25);
+            charts.pm25.update();
+
+            // Update All Parameters Chart
+            charts.allParameters.data.labels = data.map(d => d.formattedTime);
+            charts.allParameters.data.datasets[0].data = data.map(d => d.temperature);
+            charts.allParameters.data.datasets[1].data = data.map(d => d.humidity);
+            charts.allParameters.data.datasets[2].data = data.map(d => d.gas);
+            charts.allParameters.data.datasets[3].data = data.map(d => d.pm25); // Add PM2.5 data
+            charts.allParameters.update();
+
+            charts.gasDetails.data.labels = data.map(d => d.formattedTime);
+            charts.gasDetails.data.datasets[0].data = data.map(d => d.gas);
+            charts.gasDetails.update();
+
+            const tempGasCorrelation = data.map(d => ({
+                x: d.temperature,
+                y: d.gas
+            }));
+            const humGasCorrelation = data.map(d => ({
+                x: d.humidity,
+                y: d.gas
+            }));
+            charts.correlation.data.datasets[0].data = tempGasCorrelation;
+            charts.correlation.data.datasets[1].data = humGasCorrelation;
+            charts.correlation.update();
+        }
+
+        function updateTable(data) {
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = '';
+            const sortedData = [...data].sort((a, b) => b.timestamp - a.timestamp);
+            const recentData = sortedData.slice(0, 20);
+            if (recentData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7">No data available</td></tr>';
+                return;
+            }
+            recentData.forEach(item => {
+                const formattedDate = item.timestamp.toLocaleString();
+                const gasStatus = model.getAirQuality(item.gas); // For gas column
+                const pm25Status = model.getPm25Quality(item.pm25); // For PM2.5 quality column
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${item.temperature.toFixed(1)} °C</td>
+                    <td>${item.humidity.toFixed(1)} %</td>
+                    <td>${item.gas.toFixed(1)} ppm</td>
+                    <td>${item.pm25.toFixed(1)} µg/m³</td>
+                    <td>
+                        <span class="status-indicator" style="background-color: ${getColorForGasType(item.gasType)}"></span>
+                        ${item.gasType}
+                    </td>
+                    <td>
+                        <span class="status-indicator" style="background-color: ${pm25Status.class ? getComputedStyle(document.documentElement).getPropertyValue(--${pm25Status.class.replace('status-', '')}-color).trim() : '#777'}"></span>
+                        ${pm25Status.label}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function getColorForGasType(gasType) {
+            switch(gasType) {
+                case "Clean Air":
+                    return '#1dd1a1';
+                case "CO (Carbon Monoxide)":
+                    return '#ffb142';
+                case "NO2 (Nitrogen Dioxide)":
+                    return '#ff9f43';
+                case "NH3 (Ammonia)":
+                    return '#ee5253';
+                case "Mixed Pollutants":
+                    return '#ff6b6b';
+                case "Hazardous Air":
+                    return '#b71540';
+                default:
+                    return '#777';
+            }
+        }
+
+        function runPrediction(latestData) {
+            const temperature = latestData.temperature;
+            const humidity = latestData.humidity;
+            const pm25 = latestData.pm25; // Get latest PM2.5 for display
+
+            // This prediction is only for gas based on temp/humidity as per requirement
+            const predictedGas = model.predict(temperature, humidity); 
+            const pollutantType = model.detectGasType(predictedGas);
+            const confidenceScore = model.calculateConfidence(temperature, humidity);
+
+            // Overall Air Quality considers both gas and PM2.5
+            const overallAirQuality = model.getAirQuality(predictedGas, pm25); 
+            const pm25Quality = model.getPm25Quality(pm25);
+
+            document.getElementById('predicted-gas').textContent = ${predictedGas.toFixed(1)} ppm;
+            document.getElementById('pollutant-type').textContent = pollutantType;
+            document.getElementById('confidence-score').textContent = confidenceScore;
+            
+            const airQualityElement = document.getElementById('air-quality');
+            airQualityElement.innerHTML = <span class="status ${overallAirQuality.class}">${overallAirQuality.label}</span>;
+
+            const pm25PredictionQualityElement = document.getElementById('pm25-prediction-quality');
+            pm25PredictionQualityElement.innerHTML = <span class="status ${pm25Quality.class}">${pm25Quality.label}</span>;
+        }
+
+        function storeDataAsCSV(feeds) {
+            const processedData = feeds.map(feed => {
+                const timestamp = new Date(feed.created_at);
+                const temperature = parseFloat(feed.field1) || 0;
+                const humidity = parseFloat(feed.field2) || 0;
+                const gas = parseFloat(feed.field3) || 0;
+                const pm25 = parseFloat(feed.field4) || 0; // Assuming field4 is PM2.5
+                const gasType = model.detectGasType(gas);
+                const pm25Quality = model.getPm25Quality(pm25).label;
+                return {
+                    timestamp: timestamp.toISOString(),
+                    temperature,
+                    humidity,
+                    gas,
+                    pm25,
+                    gas_type: gasType,
+                    pm25_quality: pm25Quality
+                };
+            }).filter(item => !isNaN(item.temperature) && !isNaN(item.humidity) && !isNaN(item.gas) && !isNaN(item.pm25));
+            const csvContent = Papa.unparse(processedData);
+            localStorage.setItem('airQualityData', csvContent);
+            return csvContent;
+        }
+
+        function downloadCSV() {
+            const csvContent = localStorage.getItem('airQualityData') || '';
+            if (!csvContent) {
+                alert('No data available to download.');
+                return;
+            }
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'air_quality_data.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function showError(message) {
+            console.warn('Error displayed:', message);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            const container = document.querySelector('.container');
+            container.insertBefore(errorDiv, container.firstChild);
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 10000);
+        }
+
+        function getCurrentLocation() {
+            if (!window.isSecureContext) {
+                showError('Geolocation requires a secure context (HTTPS or localhost). Please host the page on a secure server.');
+                document.getElementById('current-location').textContent = 'Secure context required';
+                return;
+            }
+            if (!navigator.geolocation) {
+                showError('Geolocation is not supported by this browser.');
+                document.getElementById('current-location').textContent = 'Geolocation not supported';
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    console.log(Geolocation success: Latitude=${lat}, Longitude=${lon});
+                    try {
+                        const response = await fetch(https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}, {
+                            headers: {
+                                'User-Agent': 'AirQualityMonitor/1.0'
+                            }
+                        });
+                        if (!response.ok) {
+                            throw new Error(Nominatim HTTP error! Status: ${response.status});
+                        }
+                        const data = await response.json();
+                        console.log('Nominatim API response:', data);
+                        let location = 'Unknown Location';
+                        if (data && data.address) {
+                            if (data.address.city) {
+                                location = data.address.city;
+                            } else if (data.address.town) {
+                                location = data.address.town;
+                            } else if (data.address.village) {
+                                location = data.address.village;
+                            }
+                            if (data.address.state) {
+                                location += location !== 'Unknown Location' ? , ${data.address.state} : data.address.state;
+                            }
+                        }
+                        document.getElementById('current-location').textContent = location;
+                        locationData = { lat, lon, location };
+                    } catch (error) {
+                        console.error('Error getting location name:', error.message);
+                        showError(Failed to fetch location name: ${error.message}. Using coordinates instead.);
+                        document.getElementById('current-location').textContent = ${lat.toFixed(4)}, ${lon.toFixed(4)};
+                    }
+                },
+                (error) => {
+                    console.error('Geolocation error:', error.message);
+                    let errorMessage = 'Location unavailable';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Location access denied by user.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Location information unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Location request timed out.';
+                            break;
+                    }
+                    showError(Geolocation failed: ${errorMessage});
+                    document.getElementById('current-location').textContent = errorMessage;
+                },
+                {
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+        }
+
+        function initTabs() {
+            const tabs = document.querySelectorAll('.chart-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.querySelectorAll('.chart-panel').forEach(panel => {
+                        panel.classList.remove('active');
+                    });
+                    const panelId = ${tab.dataset.tab}-panel;
+                    document.getElementById(panelId).classList.add('active');
+                    Object.values(charts).forEach(chart => chart.resize());
+                });
+            });
+        }
+
+        async function init() {
+            if (!window.isSecureContext) {
+                showError('This application requires a secure context (HTTPS or localhost) for API and geolocation features.');
+            }
+            initCharts();
+            initTabs();
+            getCurrentLocation();
+            await fetchData();
+            setInterval(fetchData, 30000);
+            document.getElementById('refresh-prediction').addEventListener('click', () => {
+                if (allData.length > 0) {
+                    runPrediction(allData[allData.length - 1]);
+                } else {
+                    showError('No data available for prediction.');
+                }
+            });
+            document.getElementById('download-csv').addEventListener('click', downloadCSV);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+
+        class BackendSimulation {
+            constructor() {
+                this.dataFile = 'air_quality_data.csv';
+                setInterval(() => this.processDataForML(), 60000);
+            }
+
+            processDataForML() {
+                console.log("Backend: Processing data for ML model");
+                console.log("Backend: ML processing complete");
+            }
+
+            getHistoricalAnalysis() {
+                const analysis = {
+                    averageTemperature: 0,
+                    averageHumidity: 0,
+                    averageGas: 0,
+                    averagePm25: 0, // New field for PM2.5
+                    dominantGasType: '',
+                    dominantPm25Quality: '', // New field for dominant PM2.5 quality
+                    recommendations: []
+                };
+                if (allData.length > 0) {
+                    analysis.averageTemperature = allData.reduce((sum, item) => sum + item.temperature, 0) / allData.length;
+                    analysis.averageHumidity = allData.reduce((sum, item) => sum + item.humidity, 0) / allData.length;
+                    analysis.averageGas = allData.reduce((sum, item) => sum + item.gas, 0) / allData.length;
+                    analysis.averagePm25 = allData.reduce((sum, item) => sum + item.pm25, 0) / allData.length;
+
+                    const gasTypeCounts = {};
+                    allData.forEach(item => {
+                        gasTypeCounts[item.gasType] = (gasTypeCounts[item.gasType] || 0) + 1;
+                    });
+                    let maxGasCount = 0;
+                    for (const gasType in gasTypeCounts) {
+                        if (gasTypeCounts[gasType] > maxGasCount) {
+                            maxGasCount = gasTypeCounts[gasType];
+                            analysis.dominantGasType = gasType;
+                        }
+                    }
+
+                    const pm25QualityCounts = {};
+                    allData.forEach(item => {
+                        pm25QualityCounts[item.pm25QualityLabel] = (pm25QualityCounts[item.pm25QualityLabel] || 0) + 1;
+                    });
+                    let maxPm25Count = 0;
+                    for (const quality in pm25QualityCounts) {
+                        if (pm25QualityCounts[quality] > maxPm25Count) {
+                            maxPm25Count = pm25QualityCounts[quality];
+                            analysis.dominantPm25Quality = quality;
+                        }
+                    }
+
+                    // Recommendations considering both Gas and PM2.5
+                    const overallQuality = model.getAirQuality(analysis.averageGas, analysis.averagePm25);
+
+                    if (overallQuality.label === "Good") {
+                        analysis.recommendations.push("Air quality is generally good. No specific actions needed.");
+                    } else if (overallQuality.label === "Moderate") {
+                        analysis.recommendations.push("Air quality is moderate. Sensitive individuals should consider reducing prolonged or heavy exertion outdoors.");
+                        analysis.recommendations.push("Consider improving ventilation in the monitored area.");
+                    } else if (overallQuality.label === "Unhealthy for Sensitive") {
+                         analysis.recommendations.push("Air quality is unhealthy for sensitive groups. People with heart or lung disease, older adults, and children should reduce prolonged or heavy exertion.");
+                         analysis.recommendations.push("Monitor CO levels and ensure CO detectors are working if gas levels are also elevated.");
+                    } else if (overallQuality.label === "Unhealthy") {
+                        analysis.recommendations.push("Air quality is unhealthy. Everyone may begin to experience health effects; sensitive groups may experience more serious health effects.");
+                        analysis.recommendations.push("Limit outdoor activity and consider wearing masks if outdoors is unavoidable.");
+                        analysis.recommendations.push("Check for potential NO2 or NH3 sources if gas levels are significant.");
+                    } else if (overallQuality.label === "Hazardous" || overallQuality.label === "Very Unhealthy" || overallQuality.label === "Beyond Index") {
+                        analysis.recommendations.push("HAZARDOUS AIR QUALITY! Immediate evacuation recommended if possible.");
+                        analysis.recommendations.push("Stay indoors, close windows and doors, and use air purifiers if available.");
+                        analysis.recommendations.push("Contact environmental authorities for further guidance.");
+                    }
+                }
+                return analysis;
+            }
+        }
+
+        const backend = new BackendSimulation();
+    </script>
+</body>
+</html>

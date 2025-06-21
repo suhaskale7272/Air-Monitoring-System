@@ -21,27 +21,27 @@
             --hazardous-color: #c0392b; /* New color for Hazardous PM2.5 */
             --very-unhealthy-color: #8e44ad; /* New color for Very Unhealthy PM2.5 */
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
             background-color: #f0f2f5;
             color: var(--dark-color);
             line-height: 1.6;
         }
-        
+
         .container {
             width: 90%;
             max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
         }
-        
+
         header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
@@ -51,12 +51,12 @@
             border-radius: 0.5rem;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         h1 {
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .location {
             display: flex;
             align-items: center;
@@ -65,14 +65,14 @@
             font-size: 1rem;
             margin-top: 1rem;
         }
-        
+
         .dashboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
-        
+
         .card {
             background-color: white;
             border-radius: 0.5rem;
@@ -80,11 +80,11 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s ease;
         }
-        
+
         .card:hover {
             transform: translateY(-5px);
         }
-        
+
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -93,34 +93,34 @@
             border-bottom: 1px solid #eee;
             padding-bottom: 0.5rem;
         }
-        
+
         .card-title {
             font-size: 1.25rem;
             color: var(--primary-color);
         }
-        
+
         .card-icon {
             font-size: 1.5rem;
             color: var(--secondary-color);
         }
-        
+
         .reading {
             font-size: 2rem;
             font-weight: bold;
             text-align: center;
             margin: 1.5rem 0;
         }
-        
+
         .reading-unit {
             font-size: 1rem;
             color: #888;
         }
-        
+
         .chart-container {
             height: 200px;
             margin-top: 1rem;
         }
-        
+
         .status {
             display: inline-block;
             padding: 0.25rem 0.75rem;
@@ -129,15 +129,15 @@
             font-weight: 500;
             color: white;
         }
-        
+
         .status-good {
             background-color: var(--success-color);
         }
-        
+
         .status-moderate {
             background-color: var(--warning-color);
         }
-        
+
         .status-poor {
             background-color: var(--danger-color);
         }
@@ -153,7 +153,7 @@
         .status-very-unhealthy {
             background-color: var(--very-unhealthy-color);
         }
-        
+
         .charts {
             background-color: white;
             border-radius: 0.5rem;
@@ -161,34 +161,34 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             margin-bottom: 2rem;
         }
-        
+
         .chart-tabs {
             display: flex;
             border-bottom: 1px solid #eee;
             margin-bottom: 1rem;
         }
-        
+
         .chart-tab {
             padding: 0.5rem 1rem;
             cursor: pointer;
             border-bottom: 2px solid transparent;
         }
-        
+
         .chart-tab.active {
             border-bottom-color: var(--primary-color);
             color: var(--primary-color);
             font-weight: 500;
         }
-        
+
         .chart-panel {
             display: none;
             height: 400px;
         }
-        
+
         .chart-panel.active {
             display: block;
         }
-        
+
         .prediction {
             background-color: white;
             border-radius: 0.5rem;
@@ -196,7 +196,7 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             margin-top: 2rem;
         }
-        
+
         .prediction-header {
             display: flex;
             justify-content: space-between;
@@ -205,36 +205,36 @@
             border-bottom: 1px solid #eee;
             padding-bottom: 0.5rem;
         }
-        
+
         .prediction-title {
             font-size: 1.25rem;
             color: var(--primary-color);
         }
-        
+
         .prediction-result {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
             margin-top: 1rem;
         }
-        
+
         .prediction-item {
             padding: 1rem;
             background-color: #f9f9f9;
             border-radius: 0.5rem;
             border-left: 4px solid var(--primary-color);
         }
-        
+
         .prediction-label {
             font-weight: 500;
             margin-bottom: 0.5rem;
         }
-        
+
         .prediction-value {
             font-size: 1.25rem;
             font-weight: bold;
         }
-        
+
         .status-indicator {
             width: 15px;
             height: 15px;
@@ -242,7 +242,7 @@
             display: inline-block;
             margin-right: 5px;
         }
-        
+
         .footer {
             text-align: center;
             margin-top: 2rem;
@@ -250,12 +250,12 @@
             color: #888;
             font-size: 0.875rem;
         }
-        
+
         .loading {
             text-align: center;
             padding: 2rem;
         }
-        
+
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             width: 36px;
@@ -265,12 +265,12 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 1rem;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
         .error {
             background-color: rgba(255, 107, 107, 0.1);
             border-left: 4px solid var(--danger-color);
@@ -278,7 +278,7 @@
             margin: 1rem 0;
             border-radius: 0.25rem;
         }
-        
+
         .refresh-btn {
             background-color: var(--primary-color);
             color: white;
@@ -291,7 +291,7 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .refresh-btn:hover {
             background-color: #388e3c;
         }
@@ -305,27 +305,27 @@
             border-radius: 0.5rem;
             overflow: hidden;
         }
-        
+
         #data-table th, #data-table td {
             padding: 0.75rem 1rem;
             text-align: left;
             border-bottom: 1px solid #eee;
         }
-        
+
         #data-table th {
             background-color: #f4f4f4;
             font-weight: 600;
             color: var(--dark-color);
         }
-        
+
         #data-table tr:last-child td {
             border-bottom: none;
         }
-        
+
         #data-table tr:hover {
             background-color: #f9f9f9;
         }
-        
+
         .download-btn {
             background-color: var(--secondary-color);
             color: white;
@@ -339,7 +339,7 @@
             gap: 0.5rem;
             margin-top: 1rem;
         }
-        
+
         .download-btn:hover {
             background-color: #0b7dda;
         }
@@ -355,7 +355,7 @@
                 <span id="current-location">Loading location...</span>
             </div>
         </header>
-        
+
         <div class="dashboard">
             <div class="card" id="temperature-card">
                 <div class="card-header">
@@ -369,7 +369,7 @@
                     <canvas id="temperature-chart"></canvas>
                 </div>
             </div>
-            
+
             <div class="card" id="humidity-card">
                 <div class="card-header">
                     <h2 class="card-title">Humidity</h2>
@@ -382,7 +382,7 @@
                     <canvas id="humidity-chart"></canvas>
                 </div>
             </div>
-            
+
             <div class="card" id="gas-card">
                 <div class="card-header">
                     <h2 class="card-title">Gas Level</h2>
@@ -415,27 +415,27 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="charts">
             <div class="chart-tabs">
                 <div class="chart-tab active" data-tab="all-parameters">All Parameters</div>
                 <div class="chart-tab" data-tab="gas-details">Gas Details</div>
                 <div class="chart-tab" data-tab="correlation">Correlation</div>
             </div>
-            
+
             <div class="chart-panel active" id="all-parameters-panel">
                 <canvas id="all-parameters-chart"></canvas>
             </div>
-            
+
             <div class="chart-panel" id="gas-details-panel">
                 <canvas id="gas-details-chart"></canvas>
             </div>
-            
+
             <div class="chart-panel" id="correlation-panel">
                 <canvas id="correlation-chart"></canvas>
             </div>
         </div>
-        
+
         <div class="prediction">
             <div class="prediction-header">
                 <h2 class="prediction-title">AI Prediction Results</h2>
@@ -443,18 +443,18 @@
                     Refresh Prediction
                 </button>
             </div>
-            
+
             <div class="prediction-result">
                 <div class="prediction-item">
                     <div class="prediction-label">Predicted Gas Level</div>
                     <div class="prediction-value" id="predicted-gas">--</div>
                 </div>
-                
+
                 <div class="prediction-item">
                     <div class="prediction-label">Pollutant Type (Gas)</div>
                     <div class="prediction-value" id="pollutant-type">--</div>
                 </div>
-                
+
                 <div class="prediction-item">
                     <div class="prediction-label">Overall Air Quality</div>
                     <div class="prediction-value" id="overall-air-quality">--</div>
@@ -464,14 +464,14 @@
                     <div class="prediction-label">PM2.5 Quality</div>
                     <div class="prediction-value" id="pm25-prediction-quality">--</div>
                 </div>
-                
+
                 <div class="prediction-item">
                     <div class="prediction-label">Confidence Score</div>
                     <div class="prediction-value" id="confidence-score">--</div>
                 </div>
             </div>
         </div>
-        
+
         <div class="data-section">
             <h2>Historical Data</h2>
             <div id="table-container">
@@ -496,7 +496,7 @@
                 Download CSV Data
             </button>
         </div>
-        
+
         <footer class="footer">
             <p>Air Quality Index Monitoring System © 2025</p>
         </footer>
@@ -538,7 +538,7 @@
                 const temps = data.map(d => d.temperature).filter(v => !isNaN(v));
                 const hums = data.map(d => d.humidity).filter(v => !isNaN(v));
                 const gases = data.map(d => d.gas).filter(v => !isNaN(v));
-                
+
                 if (temps.length > 0) {
                     this.scalers.temperature.mean = temps.reduce((a, b) => a + b, 0) / temps.length;
                     this.scalers.temperature.std = Math.sqrt(
@@ -615,17 +615,17 @@
             // Classifies PM2.5 value into air quality categories (based on US EPA AQI breakpoints)
             getPm25Quality(pm25Value) {
                 if (isNaN(pm25Value) || pm25Value < 0) return { label: "Unknown", class: "" };
-                
+
                 if (pm25Value <= 12.0) {
                     return { label: "Good", class: "status-good" };
                 } else if (pm25Value <= 35.4) {
                     return { label: "Moderate", class: "status-moderate" };
                 } else if (pm25Value <= 55.4) {
-                    return { label: "Unhealthy for Sensitive", class: "status-poor" }; 
+                    return { label: "Unhealthy for Sensitive", class: "status-poor" };
                 } else if (pm25Value <= 150.4) {
                     return { label: "Unhealthy", class: "status-unhealthy" };
                 } else if (pm25Value <= 250.4) {
-                    return { label: "Very Unhealthy", class: "status-very-unhealthy" }; 
+                    return { label: "Very Unhealthy", class: "status-very-unhealthy" };
                 } else if (pm25Value <= 350.4) {
                     return { label: "Hazardous", class: "status-hazardous" };
                 } else {
@@ -650,7 +650,7 @@
                 // If PM2.5 data is available, evaluate it and potentially worsen the overall quality
                 if (pm25Level !== null && !isNaN(pm25Level)) {
                     const pm25Quality = this.getPm25Quality(pm25Level);
-                    
+
                     // Define a hierarchy of air quality levels (lower index means better quality)
                     const qualityHierarchy = {
                         "Good": 0,
@@ -827,13 +827,13 @@
                                 yAxisID: 'y1'
                             },
                             {
-                                label: 'PM2.5 (µg/m³)', 
+                                label: 'PM2.5 (µg/m³)',
                                 data: [],
                                 borderColor: '#FFCE56',
                                 backgroundColor: 'rgba(255, 206, 86, 0.1)',
                                 borderWidth: 2,
                                 tension: 0.4,
-                                yAxisID: 'y1' 
+                                yAxisID: 'y1'
                             }
                         ]
                     },
@@ -989,7 +989,7 @@
                 if (data.feeds.length === 0) {
                     console.warn('No data feeds available from ThingSpeak. Dashboard will show empty.');
                     // Optionally, you could show a "No Data Available" message on the UI
-                    return []; 
+                    return [];
                 }
                 processData(data.feeds);
                 storeDataAsCSV(data.feeds);
@@ -1054,20 +1054,20 @@
 
         // Updates the main dashboard cards with the latest sensor readings
         function updateDashboard(latestData) {
-            document.getElementById('temperature-reading').innerHTML = 
+            document.getElementById('temperature-reading').innerHTML =
                 ${latestData.temperature.toFixed(1)} <span class="reading-unit">°C</span>;
-            document.getElementById('humidity-reading').innerHTML = 
+            document.getElementById('humidity-reading').innerHTML =
                 ${latestData.humidity.toFixed(1)} <span class="reading-unit">%</span>;
-            document.getElementById('gas-reading').innerHTML = 
+            document.getElementById('gas-reading').innerHTML =
                 ${latestData.gas.toFixed(1)} <span class="reading-unit">ppm</span>;
-            
+
             // Gas status (individual status for the card based on gas levels)
             const gasStatus = model.getOverallAirQuality(latestData.gas); // Using overall for consistency, but you can revert to simple if preferred
             const statusElement = document.getElementById('gas-status');
             statusElement.textContent = gasStatus.label;
             statusElement.className = status ${gasStatus.class};
 
-            document.getElementById('pm25-reading').innerHTML = 
+            document.getElementById('pm25-reading').innerHTML =
                 ${latestData.pm25.toFixed(1)} <span class="reading-unit">µg/m³</span>;
             // PM2.5 status (individual status for the card based on PM2.5 levels)
             const pm25Status = model.getPm25Quality(latestData.pm25);
@@ -1102,7 +1102,7 @@
             charts.allParameters.data.datasets[0].data = data.map(d => d.temperature);
             charts.allParameters.data.datasets[1].data = data.map(d => d.humidity);
             charts.allParameters.data.datasets[2].data = data.map(d => d.gas);
-            charts.allParameters.data.datasets[3].data = data.map(d => d.pm25); 
+            charts.allParameters.data.datasets[3].data = data.map(d => d.pm25);
             charts.allParameters.update();
 
             charts.gasDetails.data.labels = data.map(d => d.formattedTime);
@@ -1130,8 +1130,8 @@
 
             recentData.forEach(item => {
                 const formattedDate = item.timestamp.toLocaleString();
-                const gasType = item.gasType; 
-                const pm25Status = model.getPm25Quality(item.pm25); 
+                const gasType = item.gasType;
+                const pm25Status = model.getPm25Quality(item.pm25);
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1171,7 +1171,7 @@
         async function runPrediction(latestData) {
             const temperature = latestData.temperature;
             const humidity = latestData.humidity;
-            const pm25 = latestData.pm25; 
+            const pm25 = latestData.pm25;
 
             // Make an API call to your Node.js backend's prediction endpoint
             try {
@@ -1186,19 +1186,19 @@
                 if (data.success && data.prediction) {
                     document.getElementById('predicted-gas').textContent = ${data.prediction.gasLevel.toFixed(1)} ppm;
                     document.getElementById('pollutant-type').textContent = data.prediction.gasType;
-                    
+
                     // Overall Air Quality from backend
                     const overallQualityLabel = data.prediction.overallAirQuality;
                     const overallQualityClass = model.getOverallAirQuality(data.prediction.gasLevel, pm25).class; // Re-use frontend logic for class
-                    document.getElementById('overall-air-quality').innerHTML = 
+                    document.getElementById('overall-air-quality').innerHTML =
                         <span class="status ${overallQualityClass}">${overallQualityLabel}</span>;
 
                     // PM2.5 Quality from backend
                     const pm25QualityLabel = data.prediction.pm25Quality;
                     const pm25QualityClass = model.getPm25Quality(pm25).class; // Re-use frontend logic for class
-                    document.getElementById('pm25-prediction-quality').innerHTML = 
+                    document.getElementById('pm25-prediction-quality').innerHTML =
                         <span class="status ${pm25QualityClass}">${pm25QualityLabel}</span>;
-                    
+
                     document.getElementById('confidence-score').textContent = ${data.prediction.confidence}%;
                 } else {
                     showError(Prediction failed: ${data.error || 'Unknown error'});
@@ -1215,9 +1215,9 @@
 
                 document.getElementById('predicted-gas').textContent = ${predictedGas.toFixed(1)} ppm (Client-side Fallback);
                 document.getElementById('pollutant-type').textContent = pollutantType;
-                document.getElementById('overall-air-quality').innerHTML = 
+                document.getElementById('overall-air-quality').innerHTML =
                     <span class="status ${overallAirQuality.class}">${overallAirQuality.label}</span> (Client-side Fallback);
-                document.getElementById('pm25-prediction-quality').innerHTML = 
+                document.getElementById('pm25-prediction-quality').innerHTML =
                     <span class="status ${pm25Quality.class}">${pm25Quality.label}</span> (Client-side Fallback);
                 document.getElementById('confidence-score').textContent = confidenceScore;
             }
@@ -1380,7 +1380,7 @@
             if (!window.isSecureContext) {
                 showError('This application requires a secure context (HTTPS or localhost) for API and geolocation features. Some features may not work.');
             }
-            
+
             initCharts(); // Initialize all Chart.js instances
             initTabs(); // Set up tab switching logic
             getCurrentLocation(); // Get user's current location
@@ -1414,7 +1414,7 @@
             constructor() {
                 this.dataFile = 'air_quality_data.csv';
                 // In a real backend, this might trigger ML model retraining periodically
-                // setInterval(() => this.processDataForML(), 60000); 
+                // setInterval(() => this.processDataForML(), 60000);
             }
 
             processDataForML() {
@@ -1428,9 +1428,9 @@
                     averageTemperature: 0,
                     averageHumidity: 0,
                     averageGas: 0,
-                    averagePm25: 0, 
+                    averagePm25: 0,
                     dominantGasType: '',
-                    dominantPm25Quality: '', 
+                    dominantPm25Quality: '',
                     recommendations: []
                 };
                 if (allData.length > 0) {

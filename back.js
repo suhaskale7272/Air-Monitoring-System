@@ -27,9 +27,8 @@ if (!fs.existsSync(config.dataDir)) {
 
 async function fetchThingSpeakData() {
     try {
-        // Request field1 (temperature), field2 (humidity), field3 (gas), field4 (PM2.5/Dust Sensitivity)
         const response = await axios.get(
-            https://api.thingspeak.com/channels/${config.channelId}/feeds.json,
+            `https://api.thingspeak.com/channels/${config.channelId}/feeds.json`,
             {
                 params: {
                     api_key: config.apiKey,
@@ -48,11 +47,11 @@ async function fetchThingSpeakData() {
                 const temp = parseFloat(feed.field1);
                 const hum = parseFloat(feed.field2);
                 const gas = parseFloat(feed.field3);
-                const pm25 = parseFloat(feed.field4); // Assuming field4 for PM2.5
-                return !isNaN(temp) && !isNaN(hum) && !isNaN(gas) && !isNaN(pm25) && // Validate PM2.5 as well
-                       temp >= -20 && temp <= 60 &&
-                       hum >= 0 && hum <= 100 &&
-                       gas >= 0 && pm25 >= 0; 
+                const pm25 = parseFloat(feed.field4);
+                return !isNaN(temp) && !isNaN(hum) && !isNaN(gas) && !isNaN(pm25) &&
+                    temp >= -20 && temp <= 60 &&
+                    hum >= 0 && hum <= 100 &&
+                    gas >= 0 && pm25 >= 0;
             } catch (e) {
                 return false;
             }
@@ -69,15 +68,14 @@ async function updateDataFile() {
         throw new Error('No valid data available');
     }
 
-    // Include 'pm25' in the header
     const csvData = ['timestamp,temperature,humidity,gas,pm25'];
     feeds.forEach(feed => {
-        csvData.push(${feed.created_at},${feed.field1},${feed.field2},${feed.field3},${feed.field4}); // Include field4 for PM2.5
+        csvData.push(`${feed.created_at},${feed.field1},${feed.field2},${feed.field3},${feed.field4}`);
     });
 
     const filePath = path.join(config.dataDir, config.dataFile);
     fs.writeFileSync(filePath, csvData.join('\n'));
-    console.log(Updated data file with ${feeds.length} records);
+    console.log(`Updated data file with ${feeds.length} records`);
     return true;
 }
 
@@ -103,13 +101,13 @@ function runPythonModel(args = []) {
 
         process.on('error', (error) => {
             clearTimeout(timeout);
-            reject(new Error(Process error: ${error.message}));
+            reject(new Error(`Process error: ${error.message}`));
         });
 
         process.on('close', (code) => {
             clearTimeout(timeout);
             if (code !== 0 || stderr) {
-                reject(new Error(`Model failed: ${stderr || Exit code ${code}}`));
+                reject(new Error(`Model failed: ${stderr || `Exit code ${code}`}`));
             } else {
                 try {
                     const output = JSON.parse(stdout.trim());
@@ -141,13 +139,13 @@ app.get('/api/data', async (req, res) => {
         const csvData = fs.readFileSync(filePath, 'utf8');
         const lines = csvData.split('\n').slice(1).filter(line => line);
         const feeds = lines.map(line => {
-            const [timestamp, temp, hum, gas, pm25] = line.split(','); // Destructure with pm25
+            const [timestamp, temp, hum, gas, pm25] = line.split(',');
             return {
                 timestamp,
                 temperature: parseFloat(temp),
                 humidity: parseFloat(hum),
                 gas: parseFloat(gas),
-                pm25: parseFloat(pm25) // Parse PM2.5
+                pm25: parseFloat(pm25)
             };
         }).filter(f => f.timestamp && !isNaN(f.temperature) && !isNaN(f.humidity) && !isNaN(f.gas) && !isNaN(f.pm25));
 
@@ -166,7 +164,7 @@ app.get('/api/predict', async (req, res) => {
     try {
         const temp = parseFloat(req.query.temperature);
         const hum = parseFloat(req.query.humidity);
-        const pm25 = parseFloat(req.query.pm25); // Get PM2.5 from query parameters
+        const pm25 = parseFloat(req.query.pm25);
 
         if (isNaN(temp) || isNaN(hum)) {
             return res.status(400).json({
@@ -175,10 +173,8 @@ app.get('/api/predict', async (req, res) => {
                 details: 'Temperature and humidity must be numbers'
             });
         }
-        // It's okay if pm25 is NaN here, the Python script will handle it for quality assessment
 
-        // Include field4 for PM2.5 in the input CSV to Python. Send NaN if not a valid number.
-        const inputData = created_at,field1,field2,field4\n"${new Date().toISOString()}",${temp},${hum},${isNaN(pm25) ? '' : pm25};
+        const inputData = `created_at,field1,field2,field4\n"${new Date().toISOString()}",${temp},${hum},${isNaN(pm25) ? '' : pm25}`;
         const inputFile = path.join(config.dataDir, 'predict_input.csv');
         fs.writeFileSync(inputFile, inputData);
 
@@ -192,8 +188,8 @@ app.get('/api/predict', async (req, res) => {
             prediction: {
                 gasLevel: result.gas_level,
                 gasType: result.gas_type,
-                overallAirQuality: result.overall_air_quality, // Changed from airQuality to overallAirQuality
-                pm25Quality: result.pm25_quality, // Include PM2.5 quality
+                overallAirQuality: result.overall_air_quality,
+                pm25Quality: result.pm25_quality,
                 confidence: result.confidence,
                 timestamp: new Date().toISOString()
             }
@@ -220,8 +216,8 @@ async function initialize() {
         }, config.updateInterval);
 
         app.listen(PORT, () => {
-            console.log(Server running on port ${PORT});
-            console.log(Data updates every ${config.updateInterval/60000} minutes);
+            console.log(`Server running on port ${PORT}`);
+            console.log(`Data updates every ${config.updateInterval / 60000} minutes`);
         });
     } catch (error) {
         console.error('Initialization failed:', error.message);

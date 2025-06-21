@@ -19,6 +19,7 @@
             --success-color: #1dd1a1;
             --unhealthy-color: #e67e22; /* New color for Unhealthy PM2.5 */
             --hazardous-color: #c0392b; /* New color for Hazardous PM2.5 */
+            --very-unhealthy-color: #8e44ad; /* New color for Very Unhealthy PM2.5 */
         }
         
         * {
@@ -147,6 +148,10 @@
 
         .status-hazardous {
             background-color: var(--hazardous-color);
+        }
+
+        .status-very-unhealthy {
+            background-color: var(--very-unhealthy-color);
         }
         
         .charts {
@@ -396,7 +401,7 @@
 
             <div class="card" id="pm25-card">
                 <div class="card-header">
-                    <h2 class="card-title">PM2.5</h2>
+                    <h2 class="card-title">PM2.5 (Dust Sensitivity)</h2>
                     <span class="card-icon">💨</span>
                 </div>
                 <div class="reading" id="pm25-reading">
@@ -451,8 +456,8 @@
                 </div>
                 
                 <div class="prediction-item">
-                    <div class="prediction-label">Air Quality (Overall)</div>
-                    <div class="prediction-value" id="air-quality">--</div>
+                    <div class="prediction-label">Overall Air Quality</div>
+                    <div class="prediction-value" id="overall-air-quality">--</div>
                 </div>
 
                 <div class="prediction-item">
@@ -594,7 +599,28 @@
                 return Math.max(Math.min(confidence, 100), 50).toFixed(1) + '%';
             }
 
-            getAirQuality(gasLevel, pm25Level = null) {
+            getPm25Quality(pm25Value) {
+                if (isNaN(pm25Value) || pm25Value < 0) return { label: "Unknown", class: "" };
+                
+                // US EPA PM2.5 AQI breakpoints (simplified)
+                if (pm25Value <= 12.0) {
+                    return { label: "Good", class: "status-good" };
+                } else if (pm25Value <= 35.4) {
+                    return { label: "Moderate", class: "status-moderate" };
+                } else if (pm25Value <= 55.4) {
+                    return { label: "Unhealthy for Sensitive", class: "status-poor" }; 
+                } else if (pm25Value <= 150.4) {
+                    return { label: "Unhealthy", class: "status-unhealthy" };
+                } else if (pm25Value <= 250.4) {
+                    return { label: "Very Unhealthy", class: "status-very-unhealthy" }; 
+                } else if (pm25Value <= 350.4) {
+                    return { label: "Hazardous", class: "status-hazardous" };
+                } else {
+                    return { label: "Beyond Index", class: "status-hazardous" };
+                }
+            }
+
+            getOverallAirQuality(gasLevel, pm25Level = null) {
                 let overallQuality = { label: "Good", class: "status-good" };
 
                 // Evaluate Gas Level
@@ -609,38 +635,27 @@
                 // Evaluate PM2.5 Level if available and potentially override or worsen overall quality
                 if (pm25Level !== null && !isNaN(pm25Level)) {
                     const pm25Quality = this.getPm25Quality(pm25Level);
-                    // Prioritize worse quality
-                    if (pm25Quality.label === "Hazardous" && overallQuality.label !== "Hazardous") {
-                        overallQuality = pm25Quality;
-                    } else if (pm25Quality.label === "Unhealthy" && (overallQuality.label !== "Hazardous" && overallQuality.label !== "Unhealthy")) {
-                        overallQuality = pm25Quality;
-                    } else if (pm25Quality.label === "Unhealthy for Sensitive" && (overallQuality.label !== "Hazardous" && overallQuality.label !== "Unhealthy" && overallQuality.label !== "Unhealthy for Sensitive")) {
-                        overallQuality = pm25Quality;
-                    } else if (pm25Quality.label === "Moderate" && (overallQuality.label === "Good")) {
+                    
+                    // Define a hierarchy of air quality (lower index means better quality)
+                    const qualityHierarchy = {
+                        "Good": 0,
+                        "Moderate": 1,
+                        "Unhealthy for Sensitive": 2,
+                        "Poor": 2, // Map 'Poor' gas quality to same level as Unhealthy for Sensitive PM2.5 for comparison
+                        "Unhealthy": 3,
+                        "Very Unhealthy": 4,
+                        "Hazardous": 5,
+                        "Beyond Index": 6
+                    };
+
+                    const currentOverallLevel = qualityHierarchy[overallQuality.label] || 0;
+                    const pm25LevelIndex = qualityHierarchy[pm25Quality.label] || 0;
+
+                    if (pm25LevelIndex > currentOverallLevel) {
                         overallQuality = pm25Quality;
                     }
                 }
                 return overallQuality;
-            }
-
-            getPm25Quality(pm25Value) {
-                if (isNaN(pm25Value)) return { label: "Unknown", class: "" };
-                
-                if (pm25Value <= 12.0) {
-                    return { label: "Good", class: "status-good" };
-                } else if (pm25Value <= 35.4) {
-                    return { label: "Moderate", class: "status-moderate" };
-                } else if (pm25Value <= 55.4) {
-                    return { label: "Unhealthy for Sensitive", class: "status-poor" }; // Using status-poor for this range
-                } else if (pm25Value <= 150.4) {
-                    return { label: "Unhealthy", class: "status-unhealthy" };
-                } else if (pm25Value <= 250.4) {
-                    return { label: "Very Unhealthy", class: "status-danger" }; // You might need to add a style for status-danger
-                } else if (pm25Value <= 350.4) {
-                    return { label: "Hazardous", class: "status-hazardous" };
-                } else {
-                    return { label: "Beyond Index", class: "status-hazardous" };
-                }
             }
         }
 
@@ -841,7 +856,7 @@
                                 position: 'left',
                                 title: {
                                     display: true,
-                                    text: 'Temperature (°C) / Humidity (%)'
+                                    text: 'Temp (°C) / Humidity (%)'
                                 }
                             },
                             y1: {
@@ -1015,7 +1030,7 @@
                 const temperature = parseFloat(feed.field1) || 0;
                 const humidity = parseFloat(feed.field2) || 0;
                 const gas = parseFloat(feed.field3) || 0;
-                const pm25 = parseFloat(feed.field4) || 0; // Assuming field4 is PM2.5
+                const pm25 = parseFloat(feed.field4) || 0; // Assuming field4 is PM2.5 (Dust Sensitivity)
                 const gasType = model.detectGasType(gas);
                 const pm25Quality = model.getPm25Quality(pm25);
                 return {
@@ -1052,13 +1067,15 @@
             document.getElementById('gas-reading').innerHTML = 
                 ${latestData.gas.toFixed(1)} <span class="reading-unit">ppm</span>;
             
-            const gasStatus = model.getAirQuality(latestData.gas); // Use original gas quality logic for this specific display
+            // Gas status (individual status for the card)
+            const gasStatus = model.getAirQuality(latestData.gas); 
             const statusElement = document.getElementById('gas-status');
             statusElement.textContent = gasStatus.label;
             statusElement.className = status ${gasStatus.class};
 
             document.getElementById('pm25-reading').innerHTML = 
                 ${latestData.pm25.toFixed(1)} <span class="reading-unit">µg/m³</span>;
+            // PM2.5 status (individual status for the card)
             const pm25Status = model.getPm25Quality(latestData.pm25);
             const pm25StatusElement = document.getElementById('pm25-status');
             pm25StatusElement.textContent = pm25Status.label;
@@ -1122,7 +1139,7 @@
             }
             recentData.forEach(item => {
                 const formattedDate = item.timestamp.toLocaleString();
-                const gasStatus = model.getAirQuality(item.gas); // For gas column
+                const gasStatus = model.getAirQuality(item.gas); // For gas pollutant type column
                 const pm25Status = model.getPm25Quality(item.pm25); // For PM2.5 quality column
 
                 const row = document.createElement('tr');
@@ -1137,7 +1154,7 @@
                         ${item.gasType}
                     </td>
                     <td>
-                        <span class="status-indicator" style="background-color: ${pm25Status.class ? getComputedStyle(document.documentElement).getPropertyValue(--${pm25Status.class.replace('status-', '')}-color).trim() : '#777'}"></span>
+                        <span class="status-indicator" style="background-color: ${getComputedStyle(document.documentElement).getPropertyValue(--${pm25Status.class.replace('status-', '')}-color).trim()}"></span>
                         ${pm25Status.label}
                     </td>
                 `;
@@ -1149,6 +1166,8 @@
             switch(gasType) {
                 case "Clean Air":
                     return '#1dd1a1';
+                case "CO2 (Carbon Dioxide)": // Adjusted based on common gas sensor types and their ranges
+                    return '#a4b0be';
                 case "CO (Carbon Monoxide)":
                     return '#ffb142';
                 case "NO2 (Nitrogen Dioxide)":
@@ -1167,7 +1186,7 @@
         function runPrediction(latestData) {
             const temperature = latestData.temperature;
             const humidity = latestData.humidity;
-            const pm25 = latestData.pm25; // Get latest PM2.5 for display
+            const pm25 = latestData.pm25; // Get latest PM2.5 for display and overall quality
 
             // This prediction is only for gas based on temp/humidity as per requirement
             const predictedGas = model.predict(temperature, humidity); 
@@ -1175,15 +1194,15 @@
             const confidenceScore = model.calculateConfidence(temperature, humidity);
 
             // Overall Air Quality considers both gas and PM2.5
-            const overallAirQuality = model.getAirQuality(predictedGas, pm25); 
-            const pm25Quality = model.getPm25Quality(pm25);
+            const overallAirQuality = model.getOverallAirQuality(predictedGas, pm25); 
+            const pm25Quality = model.getPm25Quality(pm25); // PM2.5 quality specifically
 
             document.getElementById('predicted-gas').textContent = ${predictedGas.toFixed(1)} ppm;
             document.getElementById('pollutant-type').textContent = pollutantType;
             document.getElementById('confidence-score').textContent = confidenceScore;
             
-            const airQualityElement = document.getElementById('air-quality');
-            airQualityElement.innerHTML = <span class="status ${overallAirQuality.class}">${overallAirQuality.label}</span>;
+            const overallAirQualityElement = document.getElementById('overall-air-quality');
+            overallAirQualityElement.innerHTML = <span class="status ${overallAirQuality.class}">${overallAirQuality.label}</span>;
 
             const pm25PredictionQualityElement = document.getElementById('pm25-prediction-quality');
             pm25PredictionQualityElement.innerHTML = <span class="status ${pm25Quality.class}">${pm25Quality.label}</span>;
@@ -1405,7 +1424,7 @@
                     }
 
                     // Recommendations considering both Gas and PM2.5
-                    const overallQuality = model.getAirQuality(analysis.averageGas, analysis.averagePm25);
+                    const overallQuality = model.getOverallAirQuality(analysis.averageGas, analysis.averagePm25);
 
                     if (overallQuality.label === "Good") {
                         analysis.recommendations.push("Air quality is generally good. No specific actions needed.");

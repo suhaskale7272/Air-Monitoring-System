@@ -27,7 +27,7 @@ if (!fs.existsSync(config.dataDir)) {
 
 async function fetchThingSpeakData() {
     try {
-        // Request field1 (temperature), field2 (humidity), field3 (gas), field4 (PM2.5)
+        // Request field1 (temperature), field2 (humidity), field3 (gas), field4 (PM2.5/Dust Sensitivity)
         const response = await axios.get(
             https://api.thingspeak.com/channels/${config.channelId}/feeds.json,
             {
@@ -49,10 +49,10 @@ async function fetchThingSpeakData() {
                 const hum = parseFloat(feed.field2);
                 const gas = parseFloat(feed.field3);
                 const pm25 = parseFloat(feed.field4); // Assuming field4 for PM2.5
-                return !isNaN(temp) && !isNaN(hum) && !isNaN(gas) && !isNaN(pm25) &&
+                return !isNaN(temp) && !isNaN(hum) && !isNaN(gas) && !isNaN(pm25) && // Validate PM2.5 as well
                        temp >= -20 && temp <= 60 &&
                        hum >= 0 && hum <= 100 &&
-                       gas >= 0 && pm25 >= 0; // Validate PM2.5 as well
+                       gas >= 0 && pm25 >= 0; 
             } catch (e) {
                 return false;
             }
@@ -175,9 +175,10 @@ app.get('/api/predict', async (req, res) => {
                 details: 'Temperature and humidity must be numbers'
             });
         }
+        // It's okay if pm25 is NaN here, the Python script will handle it for quality assessment
 
-        // Include field4 for PM2.5 in the input CSV to Python
-        const inputData = created_at,field1,field2,field4\n"${new Date().toISOString()}",${temp},${hum},${pm25};
+        // Include field4 for PM2.5 in the input CSV to Python. Send NaN if not a valid number.
+        const inputData = created_at,field1,field2,field4\n"${new Date().toISOString()}",${temp},${hum},${isNaN(pm25) ? '' : pm25};
         const inputFile = path.join(config.dataDir, 'predict_input.csv');
         fs.writeFileSync(inputFile, inputData);
 
@@ -191,7 +192,7 @@ app.get('/api/predict', async (req, res) => {
             prediction: {
                 gasLevel: result.gas_level,
                 gasType: result.gas_type,
-                airQuality: result.air_quality,
+                overallAirQuality: result.overall_air_quality, // Changed from airQuality to overallAirQuality
                 pm25Quality: result.pm25_quality, // Include PM2.5 quality
                 confidence: result.confidence,
                 timestamp: new Date().toISOString()
